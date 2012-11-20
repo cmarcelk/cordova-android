@@ -273,6 +273,7 @@ public class CordovaWebView extends WebView {
     }
 
     private void exposeJsInterface() {
+        int FUTURE_JELLY_BEAN_MR1 = 17; // remove this if the 4.2 SDK (API 17) or greater is present. Otherwise we are peeking ahead in time from the 4.1 SDK.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
             Log.i(TAG, "Disabled addJavascriptInterface() bridge since Android version is old.");
             // Bug being that Java Strings do not get converted to JS strings automatically.
@@ -282,6 +283,9 @@ public class CordovaWebView extends WebView {
         } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB && Build.MANUFACTURER.equals("unknown")) {
             // addJavascriptInterface crashes on the 2.3 emulator.
             Log.i(TAG, "Disabled addJavascriptInterface() bridge callback due to a bug on the 2.3 emulator");
+            return;
+        } else if (Build.VERSION.SDK_INT == FUTURE_JELLY_BEAN_MR1) {            
+            Log.i(TAG, "Disabled addJavascriptInterface() bridge callback for Android 4.2. The SDK won't let us compile the annotations required for addJavascriptInterface().");
             return;
         }
         this.addJavascriptInterface(exposedJsApi, "_cordovaNative");
