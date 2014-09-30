@@ -199,6 +199,10 @@ public class CordovaActivity extends Activity implements CordovaInterface {
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	this.onCreate(savedInstanceState, true);
+    }
+    
+    public void onCreate(Bundle savedInstanceState, boolean doActivateConfig) {
         LOG.i(TAG, "Apache Cordova native platform version " + CordovaWebView.CORDOVA_VERSION + " is starting");
         LOG.d(TAG, "CordovaActivity.onCreate()");
         super.onCreate(savedInstanceState);
@@ -209,11 +213,6 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         }
         
         loadConfig();
-        activateConfig();
-    }
-    
-    public void onCreate(Bundle savedInstanceState, boolean doActivateConfig) {
-    	this.onCreate(savedInstanceState);
     	if (doActivateConfig) {
     		activateConfig();
     	}
