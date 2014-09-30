@@ -209,7 +209,16 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         }
         
         loadConfig();
-        
+    }
+    
+    public void onCreate(Bundle savedInstanceState, boolean doActivateConfig) {
+    	this.onCreate(savedInstanceState);
+    	if (doActivateConfig) {
+    		activateConfig();
+    	}
+    }
+    
+    public void activateConfig() {
         if(!preferences.getBoolean("ShowTitle", false))
         {
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
