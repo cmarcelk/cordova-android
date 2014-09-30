@@ -73,6 +73,7 @@ import android.widget.LinearLayout;
  *       &#64;Override
  *       public void onCreate(Bundle savedInstanceState) {
  *         super.onCreate(savedInstanceState);
+ *         super.init();
  *         // Load your application
  *         loadUrl(launchUrl);
  *       }
