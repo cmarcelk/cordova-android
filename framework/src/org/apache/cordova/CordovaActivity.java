@@ -72,6 +72,7 @@ import android.widget.LinearLayout;
  *       &#64;Override
  *       public void onCreate(Bundle savedInstanceState) {
  *         super.onCreate(savedInstanceState);
+ *         super.init();
  *         // Load your application
  *         loadUrl(launchUrl);
  *       }
@@ -208,6 +209,38 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         }
         
         loadConfig();
+        
+        if(!preferences.getBoolean("ShowTitle", false))
+        {
+            getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        }
+
+        if(preferences.getBoolean("SetFullscreen", false))
+        {
+            Log.d(TAG, "The SetFullscreen configuration is deprecated in favor of Fullscreen, and will be removed in a future version.");
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else if (preferences.getBoolean("Fullscreen", false)) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
+
+        // This builds the view.  We could probably get away with NOT having a LinearLayout, but I like having a bucket!
+        Display display = getWindowManager().getDefaultDisplay();
+        int width = display.getWidth();
+        int height = display.getHeight();
+
+        root = new LinearLayoutSoftKeyboardDetect(this, width, height);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT, 0.0F));
+        
+        // TODO: Make this a preference (CB-6153)
+        // Setup the hardware volume controls to handle volume control
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     @SuppressWarnings("deprecation")
@@ -222,34 +255,6 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         launchUrl = parser.getLaunchUrl();
         pluginEntries = parser.getPluginEntries();
         Config.parser = parser;
-    }
-
-    @SuppressWarnings("deprecation")
-    protected void createViews() {
-        // This builds the view.  We could probably get away with NOT having a LinearLayout, but I like having a bucket!
-        // This builds the view.  We could probably get away with NOT having a LinearLayout, but I like having a bucket!
-        Display display = getWindowManager().getDefaultDisplay();
-        int width = display.getWidth();
-        int height = display.getHeight();
-
-        root = new LinearLayoutSoftKeyboardDetect(this, width, height);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT, 0.0F));
-
-        appView.setId(100);
-        appView.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                1.0F));
-
-        // Add web view but make it invisible while loading URL
-        appView.setVisibility(View.INVISIBLE);
-        root.addView((View) appView);
-        setContentView(root);
-
-        int backgroundColor = preferences.getInteger("BackgroundColor", Color.BLACK);
-        root.setBackgroundColor(backgroundColor);
     }
 
     /**
@@ -302,25 +307,22 @@ public class CordovaActivity extends Activity implements CordovaInterface {
     public void init(CordovaWebView webView, CordovaWebViewClient webViewClient, CordovaChromeClient webChromeClient) {
         LOG.d(TAG, "CordovaActivity.init()");
 
-        if(!preferences.getBoolean("ShowTitle", false))
-        {
-            getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        }
-
-        if(preferences.getBoolean("SetFullscreen", false))
-        {
-            Log.d(TAG, "The SetFullscreen configuration is deprecated in favor of Fullscreen, and will be removed in a future version.");
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else if (preferences.getBoolean("Fullscreen", false)) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        }
-
         appView = webView != null ? webView : makeWebView();
+        appView.setId(100);
+        
+        appView.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                1.0F));
+
+        // Add web view but make it invisible while loading URL
+        appView.setVisibility(View.INVISIBLE);
+        root.addView((View) appView);
+        setContentView(root);
+
+        int backgroundColor = preferences.getInteger("BackgroundColor", Color.BLACK);
+        root.setBackgroundColor(backgroundColor);
+        
         if (appView.pluginManager == null) {
             appView.init(this, webViewClient != null ? webViewClient : makeWebViewClient(appView),
                     webChromeClient != null ? webChromeClient : makeChromeClient(appView),
@@ -331,11 +333,7 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         if (preferences.getBoolean("DisallowOverscroll", false)) {
             appView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         }
-        createViews();
 
-        // TODO: Make this a preference (CB-6153)
-        // Setup the hardware volume controls to handle volume control
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     /**
@@ -750,7 +748,7 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         super.onActivityResult(requestCode, resultCode, intent);
         Log.d(TAG, "Request code = " + requestCode);
         if (appView != null && requestCode == CordovaChromeClient.FILECHOOSER_RESULTCODE) {
-        	ValueCallback<Uri> mUploadMessage = this.appView.getWebChromeClient().getValueCallback();
+            ValueCallback<Uri> mUploadMessage = this.appView.getWebChromeClient().getValueCallback();
             Log.d(TAG, "did we get here?");
             if (null == mUploadMessage)
                 return;
@@ -965,7 +963,7 @@ public class CordovaActivity extends Activity implements CordovaInterface {
             return appView.onKeyUp(keyCode, event);
         } else {
             return super.onKeyUp(keyCode, event);
-    	}
+        }
     }
     
     /*
