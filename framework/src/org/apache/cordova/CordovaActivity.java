@@ -209,6 +209,7 @@ public class CordovaActivity extends Activity implements CordovaInterface {
         }
         
         loadConfig();
+        activateConfig();
     }
     
     public void onCreate(Bundle savedInstanceState, boolean doActivateConfig) {
